@@ -41,6 +41,7 @@ class Tribe__Tickets__REST__V1__Attendee_Repository
 	public function build_query( $use_query_builder = true ) {
 		if ( ! current_user_can( 'read_private_posts' ) ) {
 			$this->decorated->by( 'optout', 'no' );
+			$this->decorated->by( 'hide_attendees', 'no' );
 			$this->decorated->by( 'post_status', 'publish' );
 			$this->decorated->by( 'rsvp_status__or_none', 'yes' );
 		}
@@ -112,9 +113,12 @@ class Tribe__Tickets__REST__V1__Attendee_Repository
 
 		if ( current_user_can( 'read_private_posts' ) ) {
 			return $this->format_item( $found[0] );
+		} else {
+			$this->decorated->by( 'hide_attendees', 'no' );
 		}
 
 		$this->decorated->by( 'optout', 'no' );
+
 		$this->decorated->by( 'post_status', 'publish' );
 		$this->decorated->by( 'rsvp_status__or_none', 'yes' );
 

@@ -73,18 +73,18 @@ class Tribe__Tickets__Attendee_Repository extends Tribe__Repository {
 		$this->add_simple_meta_schema_entry( 'price', '_paid_price' );
 
 		$this->schema = array_merge( $this->schema, [
-			'optout'               => [ $this, 'filter_by_optout' ],
-			'rsvp_status'          => [ $this, 'filter_by_rsvp_status' ],
-			'rsvp_status__or_none' => [ $this, 'filter_by_rsvp_status_or_none' ],
-			'provider'             => [ $this, 'filter_by_provider' ],
-			'provider__not_in'     => [ $this, 'filter_by_provider_not_in' ],
-			'event_status'         => [ $this, 'filter_by_event_status' ],
-			'order_status'         => [ $this, 'filter_by_order_status' ],
-			'order_status__not_in' => [ $this, 'filter_by_order_status_not_in' ],
-			'price_min'            => [ $this, 'filter_by_price_min' ],
-			'price_max'            => [ $this, 'filter_by_price_max' ],
-			'has_attendee_meta'    => [ $this, 'filter_by_attendee_meta_existence' ],
 			'checkedin'            => [ $this, 'filter_by_checkedin' ],
+			'event_status'         => [ $this, 'filter_by_event_status' ],
+			'has_attendee_meta'    => [ $this, 'filter_by_attendee_meta_existence' ],
+			'optout'               => [ $this, 'filter_by_optout' ],
+			'order_status__not_in' => [ $this, 'filter_by_order_status_not_in' ],
+			'order_status'         => [ $this, 'filter_by_order_status' ],
+			'price_max'            => [ $this, 'filter_by_price_max' ],
+			'price_min'            => [ $this, 'filter_by_price_min' ],
+			'provider__not_in'     => [ $this, 'filter_by_provider_not_in' ],
+			'provider'             => [ $this, 'filter_by_provider' ],
+			'rsvp_status__or_none' => [ $this, 'filter_by_rsvp_status_or_none' ],
+			'rsvp_status'          => [ $this, 'filter_by_rsvp_status' ],
 		] );
 
 		$this->init_order_statuses();
