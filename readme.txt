@@ -117,6 +117,9 @@ Currently, the following add-ons are available for Event Tickets:
 
 == Changelog ==
 
+= [TBD] TBD =
+* Feature - Make all tickets blocks optional and controlled in Events->Settings->Tickets. [138887]
+
 = [4.11.1] 2019-12-19 =
 
 * Feature - Use the same loading icon for the RSVP block that we're using for the tickets block. [135660]

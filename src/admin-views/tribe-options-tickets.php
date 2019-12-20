@@ -37,6 +37,11 @@ $all_post_types = apply_filters( 'tribe_tickets_settings_post_types', $all_post_
 
 $options = get_option( Tribe__Main::OPTIONNAME, [] );
 
+/** var Tribe__Tickets__Editor $tickets_editor */
+$tickets_editor         = tribe( 'tickets.editor' );
+$ticket_blocks_options  = $tickets_editor->get_available_blocks();
+$default_blocks_options = $tickets_editor->get_default_blocks();
+
 /**
  * List of ticketing solutions that support login requirements (ie, disabling or
  * enabling the ticket form according to whether a user is logged in or not).
@@ -73,7 +78,7 @@ $tec_fields = [];
 
 /**
  * If The Events Calendar is active let's add an option to control the position
- * of the ticket forms in the events view.
+ * of the ticket forms in the events view. Also anything that depends on the TEC Gutenberg toggle.
  */
 if ( class_exists( 'Tribe__Events__Main' ) ) {
 	$ticket_form_location_options = [
@@ -83,35 +88,49 @@ if ( class_exists( 'Tribe__Events__Main' ) ) {
 		'tribe_events_single_event_before_the_content' => __( 'Above the event description', 'event-tickets' ),
 	];
 
+	$tec_parent_option = Tribe__Events__Main::OPTIONNAME;
+
 	$tec_fields = [
 		'ticket-rsvp-form-location'             => [
-		'type'            => 'dropdown',
-		'label'           => esc_html( sprintf( _x( 'Location of %s form', 'form location setting', 'event-tickets' ), tribe_get_rsvp_label_singular( 'form_location_setting' ) ) ),
-		'tooltip'         => esc_html__( 'This setting only impacts events made with the classic editor.', 'event-tickets' ),
-		'options'         => $ticket_form_location_options,
-		'validation_type' => 'options',
-		'parent_option'   => Tribe__Events__Main::OPTIONNAME,
-		'default'         => reset( $ticket_form_location_options ),
+			'type'            => 'dropdown',
+			'label'           => esc_html( sprintf( _x( 'Location of %s form', 'form location setting', 'event-tickets' ), tribe_get_rsvp_label_singular( 'form_location_setting' ) ) ),
+			'tooltip'         => esc_html__( 'This setting only impacts events made with the classic editor.', 'event-tickets' ),
+			'options'         => $ticket_form_location_options,
+			'validation_type' => 'options',
+			'parent_option'   => $tec_parent_option,
+			'default'         => reset( $ticket_form_location_options ),
 		],
 		'ticket-commerce-form-location'         => [
-		'type'            => 'dropdown',
-		'label'           => esc_html( sprintf( _x( 'Location of %s form', 'form location setting', 'event-tickets' ), tribe_get_ticket_label_plural( 'form_location_setting' ) ) ),
-		'tooltip'         => esc_html__( 'This setting only impacts events made with the classic editor.', 'event-tickets' ),
-		'options'         => $ticket_form_location_options,
-		'validation_type' => 'options',
-		'parent_option'   => Tribe__Events__Main::OPTIONNAME,
-		'default'         => reset( $ticket_form_location_options ),
+			'type'            => 'dropdown',
+			'label'           => esc_html( sprintf( _x( 'Location of %s form', 'form location setting', 'event-tickets' ), tribe_get_ticket_label_plural( 'form_location_setting' ) ) ),
+			'tooltip'         => esc_html__( 'This setting only impacts events made with the classic editor.', 'event-tickets' ),
+			'options'         => $ticket_form_location_options,
+			'validation_type' => 'options',
+			'parent_option'   => $tec_parent_option,
+			'default'         => reset( $ticket_form_location_options ),
 		],
 		'ticket-display-tickets-left-threshold' => [
-		'type'            => 'text',
-		'label'           => esc_html( sprintf( _x( 'Display # %s left threshold', 'tickets remaining threshold label', 'event-tickets' ), tribe_get_ticket_label_plural_lowercase( 'remaining_threshold_setting_label' ) ) ),
-		'tooltip'         => esc_html( sprintf( _x( 'If this number is less than the number of %1$s left for sale on your event, this will prevent the "# of %1$s left" text from showing on your website. You can leave this blank if you would like to always show the text.', 'tickets remaining threshold tooltip', 'event-tickets' ), tribe_get_ticket_label_plural_lowercase( 'remaining_threshold_setting_tooltip' ) ) ),
-		'validation_type' => 'int',
-		'size'            => 'small',
-		'can_be_empty'    => true,
-		'parent_option'   => Tribe__Events__Main::OPTIONNAME,
-		],
+			'type'            => 'text',
+			'label'           => esc_html( sprintf( _x( 'Display # %s left threshold', 'tickets remaining threshold label', 'event-tickets' ), tribe_get_ticket_label_plural_lowercase( 'remaining_threshold_setting_label' ) ) ),
+			'tooltip'         => esc_html( sprintf( _x( 'If this number is less than the number of %1$s left for sale on your event, this will prevent the "# of %1$s left" text from showing on your website. You can leave this blank if you would like to always show the text.', 'tickets remaining threshold tooltip', 'event-tickets' ), tribe_get_ticket_label_plural_lowercase( 'remaining_threshold_setting_tooltip' ) ) ),
+			'validation_type' => 'int',
+			'size'            => 'small',
+			'can_be_empty'    => true,
+			'parent_option'   => $tec_parent_option,
+		]
 	];
+
+	if ( tribe_get_option( 'toggle_blocks_editor', false ) ) {
+		$tickets_fields[ 'ticket-default-editor-blocks' ] = [
+			'type'            => 'checkbox_list',
+			'label'           => esc_html( sprintf( _x( 'Default %s blocks added to new event posts.', 'default tickets blocks', 'event-tickets' ), strtolower( tribe_get_ticket_label_plural( 'form_location_setting' ) ) ) ),
+			'tooltip'         => esc_html__( 'This setting only impacts events made with the block editor. You can still manually add blocks if they are unchecked here.', 'event-tickets' ),
+			'options'         => $ticket_blocks_options,
+			'default'         => $default_blocks_options,
+			'can_be_empty'    => true,
+			'validation_type' => 'options_multi',
+		];
+	}
 }
 
 $authentication_fields = [
@@ -365,7 +384,7 @@ if ( defined( 'WP_DEBUG' ) && true === WP_DEBUG ) {
 }
 
 foreach ( $paypal_subfields as $key => &$commerce_field ) {
-	$field_classes = (array) Tribe__Utils__Array::get( $commerce_field, 'class', array() );
+	$field_classes = (array) Tribe__Utils__Array::get( $commerce_field, 'class', [] );
 	array_push( $field_classes, 'tribe-dependent' );
 	$commerce_field['class']               = implode( ' ', $field_classes );
 	$existing_field_attributes             = Tribe__Utils__Array::get( $commerce_field, 'fieldset_attributes', [] );

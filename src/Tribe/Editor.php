@@ -17,6 +17,24 @@ class Tribe__Tickets__Editor extends Tribe__Editor {
 	public $meta_key_flush_flag = '_tribe_tickets_flush_blocks';
 
 	/**
+	 * Variable used to hold the blocks available to be added to event posts.
+	 *
+	 * @since TBD
+	 *
+	 * @var array
+	 */
+	public $available_blocks = [];
+
+	/**
+	 * Variable used to hold the blocks added by default to event posts.
+	 *
+	 * @since TBD
+	 *
+	 * @var array
+	 */
+	public $default_blocks = [];
+
+	/**
 	 * Hooks actions from the editor into the correct places
 	 *
 	 * @since 4.9
@@ -31,6 +49,7 @@ class Tribe__Tickets__Editor extends Tribe__Editor {
 		add_filter( 'tribe_blocks_editor_update_classic_content', array( $this, 'update_tickets_block_with_childs' ), 10, 3 );
 
 		// Add RSVP and tickets blocks
+		add_action( 'init', [ $this, 'setup_block_list' ] );
 		add_action( 'admin_init', array( $this, 'add_tickets_block_in_editor' ) );
 
 		add_filter( 'tribe_events_editor_default_classic_template', array( $this, 'filter_default_template_classic_blocks' ), 15 );
@@ -44,6 +63,62 @@ class Tribe__Tickets__Editor extends Tribe__Editor {
 		// Maybe add flag from classic editor
 		add_action( 'load-post.php', array( $this, 'flush_blocks' ), 0 );
 		add_action( 'tribe_tickets_update_blocks_from_classic_editor', array( $this, 'update_blocks' ) );
+	}
+
+	public function setup_block_list() {
+		$blocks = [
+			'attendees' => _x( 'Attendees block', 'Attendees block label for default blocks settings', 'event-tickets'),
+			'rsvp' => _x( 'RSVP block', 'RSVP block label for default blocks settings', 'event-tickets'),
+			'tickets' => _x( 'Tickets block', 'Tickets block label for default blocks settings', 'event-tickets'),
+		];
+
+		/**
+		 * Allows filtering of available ticket blocks added to events on init.
+		 *
+		 * @since TBD
+		 *
+		 * @param array $blocks An array of blocks available to add to event posts by available,
+		 *                      in the format [ 'block_slug' => 'block description' ]
+		 */
+		$blocks = apply_filters( 'tribe_tickets_initial_available_blocks', $blocks );
+
+		$this->available_blocks = $blocks;
+	}
+
+	/**
+	 * Gets and filters the default blocks.
+	 *
+	 * @return void
+	 */
+	public function get_available_blocks() {
+		/**
+		 * Allows filtering of available ticket blocks added to events when called for.
+		 * For cases where init is too soon.
+		 *
+		 * @since TBD
+		 *
+		 * @param array $available_blocks An array of blocks available to add to event posts by available,
+		 *                              in the format [ [ 'block one' ], [ 'block two' ] ]
+		 */
+		return apply_filters( 'tribe_tickets_available_blocks', $this->available_blocks );
+	}
+
+	/**
+	 * Gets and filters the default blocks.
+	 *
+	 * @return void
+	 */
+	public function get_default_blocks() {
+		$this->default_blocks = tribe_get_option( 'ticket-default-editor-blocks', [ 'rsvp', 'tickets' ] );
+		/**
+		 * Allows filtering of default ticket blocks added to events.
+		 *
+		 * @since TBD
+		 *
+		 * @param array $default_blocks An array of blocks to add to event posts by default,
+		 *                              in the format [ [ 'block one' ], [ 'block two' ] ]
+		 */
+		return apply_filters( 'tribe_tickets_default_blocks', $this->default_blocks );
 	}
 
 	/**
@@ -73,9 +148,13 @@ class Tribe__Tickets__Editor extends Tribe__Editor {
 				? (array) $post_type_object->template
 				: array();
 
-			$template[] = array( 'tribe/tickets' );
-			$template[] = array( 'tribe/rsvp' );
-			$template[] = array( 'tribe/attendees' );
+			$default_blocks = $this->get_default_blocks();
+
+			if ( ! empty( $default_blocks ) ) {
+				foreach ( $default_blocks as $block ) {
+					$template[] = [ 'tribe/' . esc_html( $block ) ];
+				}
+			}
 
 			$post_type_object->template = $template;
 		}

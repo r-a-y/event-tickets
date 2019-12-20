@@ -261,7 +261,6 @@ class Tribe__Tickets__Status__Manager {
 		}
 
 		return $trigger_statuses;
-
 	}
 
 	/**
