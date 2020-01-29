@@ -175,6 +175,7 @@ $classes        = [
 			'components/notice',
 			[
 				'notice_classes'  => $notice_classes,
+				'title' => '',
 				'content' => sprintf(
 					esc_html_x(
 						'There are %s other tickets in your cart that do not require attendee information.',
